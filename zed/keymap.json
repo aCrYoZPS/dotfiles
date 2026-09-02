@@ -93,7 +93,7 @@
 
       // ── Buffers / files ──
       "space w": "workspace::Save", // mappings.lua: <leader>w -> :w
-      "space q": "pane::CloseActiveItem", // mappings.lua: <leader>q -> :q
+      "space q": "workspace::CloseWindow", // mappings.lua: <leader>q -> :q
       "space x": "pane::CloseActiveItem", // NvChad: buffer close
       "space /": "editor::ToggleComments", // toggle comment
       "space b": "vim::ToggleVisualBlock", // mappings.lua: <leader>b -> <C-v>
