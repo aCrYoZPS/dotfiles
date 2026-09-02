@@ -1,0 +1,89 @@
+// Zed settings
+//
+// For information on how to configure Zed, see the Zed
+// documentation: https://zed.dev/docs/configuring-zed
+//
+// To see all of Zed's default settings without changing your
+// custom settings, run `zed: open default settings` from the
+// command palette (cmd-shift-p / ctrl-shift-p)
+{
+  "outline_panel": {
+    "dock": "left"
+  },
+  "collaboration_panel": {
+    "dock": "left"
+  },
+  "agent": {
+    "sidebar_side": "right",
+    "dock": "right",
+    "favorite_models": [],
+    "model_parameters": []
+  },
+  "git_panel": {
+    "dock": "left"
+  },
+  "terminal": {
+    "starts_open": false
+  },
+  "project_panel": {
+    "git_status_indicator": true,
+    "folder_icons": true,
+    "file_icons": true,
+    "entry_spacing": "comfortable",
+    "default_width": 300.0,
+    "dock": "left"
+  },
+  "format_on_save": "modifications_if_available",
+  "vim": {
+    "use_smartcase_find": true,
+    "toggle_relative_line_numbers": false,
+    // Replicates nvim `o.cb = ''` + the "+y / "+p leader remaps:
+    // yanks reach the system clipboard, deletes do not clobber it.
+    "use_system_clipboard": "on_yank"
+  },
+  // options.lua equivalents
+  "tab_size": 4, // o.tabstop / o.shiftwidth = 4
+  "hard_tabs": false, // o.expandtab
+  "soft_wrap": "none", // vim.opt.wrap = false
+  "wrap_guides": [120], // vim.opt.colorcolumn = "120"
+  "inlay_hints": {
+    "enabled": true // vim.lsp.inlay_hint.enable()
+  },
+  "toolbar": {
+    "breadcrumbs": true
+  },
+  "relative_line_numbers": "wrapped",
+  "vertical_scroll_margin": 8.0,
+  "which_key": {
+    "enabled": false
+  },
+  "icon_theme": {
+    "mode": "dark",
+    "light": "Zed (Default)",
+    "dark": "Zed (Default)"
+  },
+  "base_keymap": "Zed",
+  // Extensions live outside this file, so they do not travel with it.
+  // Listing them here makes a fresh machine install them on first launch.
+  "auto_install_extensions": {
+    "html": true,
+    "catppuccin": true,
+    "catppuccin-icons": true
+  },
+  "telemetry": {
+    "diagnostics": true,
+    "metrics": false,
+    "anthropic_retention": false
+  },
+  "session": {
+    "trust_all_worktrees": true
+  },
+  "vim_mode": true,
+  "ui_font_size": 16,
+  "buffer_font_size": 15,
+  "theme": {
+    "mode": "dark",
+    "light": "One Light",
+    "dark": "Ayu Dark",
+  },
+}

@@ -1,0 +1,274 @@
+// Zed keymap — replicating the NvChad-based Neovim config in AppData/Local/nvim
+//
+// Leader is `space`, matching `vim.g.mapleader = " "` in init.lua.
+// Sections mirror the source files: NvChad defaults, lua/mappings.lua, LSP on_attach.
+//
+// Docs: https://zed.dev/docs/key-bindings
+[
+  // ───────────────────────────────────────────────────────────────
+  // Workspace-level (work outside the editor too)
+  // ───────────────────────────────────────────────────────────────
+  {
+    "context": "Workspace",
+    "bindings": {
+      "ctrl-s": "workspace::Save", // NvChad: general save file
+      "ctrl-n": "workspace::ToggleLeftDock" // NvChad: nvimtree toggle
+    }
+  },
+
+  // ───────────────────────────────────────────────────────────────
+  // Insert mode — NvChad's emacs-ish insert motions
+  // ───────────────────────────────────────────────────────────────
+  {
+    "context": "Editor && vim_mode == insert",
+    "bindings": {
+      "ctrl-b": "editor::MoveToBeginningOfLine", // <C-b> move beginning of line
+      "ctrl-e": "editor::MoveToEndOfLine", // <C-e> move end of line
+      "ctrl-h": "editor::MoveLeft",
+      "ctrl-l": "editor::MoveRight",
+      "ctrl-j": "editor::MoveDown",
+      "ctrl-k": "editor::MoveUp"
+    }
+  },
+
+  // ───────────────────────────────────────────────────────────────
+  // Normal + visual (VimControl) — window nav, misc
+  // ───────────────────────────────────────────────────────────────
+  {
+    "context": "VimControl && !menu",
+    "bindings": {
+      ";": "command_palette::Toggle", // mappings.lua: ";" -> ":"
+
+      // NvChad: window switching
+      "ctrl-h": "workspace::ActivatePaneLeft",
+      "ctrl-l": "workspace::ActivatePaneRight",
+      "ctrl-j": "workspace::ActivatePaneDown",
+      "ctrl-k": "workspace::ActivatePaneUp",
+
+      "ctrl-c": null, // mappings.lua: map("n", "<C-c>", "") — disabled
+
+      // Terminal toggles (NvChad <A-v>/<A-h>/<A-i>)
+      "alt-v": "terminal_panel::ToggleFocus",
+      "alt-h": "workspace::ToggleBottomDock",
+      "alt-i": "terminal_panel::ToggleFocus"
+    }
+  },
+
+  // ───────────────────────────────────────────────────────────────
+  // Normal mode
+  // ───────────────────────────────────────────────────────────────
+  {
+    "context": "Editor && vim_mode == normal && !menu",
+    "bindings": {
+      "ctrl-a": "editor::SelectAll", // mappings.lua: "ggVG"
+      "tab": "pane::ActivateNextItem", // NvChad: buffer goto next
+      "shift-tab": "pane::ActivatePreviousItem", // NvChad: buffer goto prev
+      "q j": ["workspace::SendKeystrokes", "@ q"], // mappings.lua: "qj" -> "@q"
+
+      // ── Files / search (NvChad telescope group) ──
+      "space f f": "file_finder::Toggle", // find files
+      "space f a": "file_finder::Toggle", // find all files
+      "space f o": "file_finder::Toggle", // oldfiles (Zed's finder lists recents)
+      "space f w": "pane::DeploySearch", // live grep -> project search
+      "space f b": "tab_switcher::Toggle", // find buffers
+      "space f z": "buffer_search::Deploy", // fuzzy find in current buffer
+      "space f h": "zed::OpenDocs", // help tags -> Zed docs
+      "space f m": "editor::Format", // NvChad: general format file
+      "space m a": "vim::ToggleMarksView", // find marks
+
+      // ── Git (NvChad telescope git) ──
+      "space c m": "git_panel::ToggleFocus", // git commits
+      "space g t": "git_panel::ToggleFocus", // git status
+
+      // ── UI toggles ──
+      "space e": "project_panel::ToggleFocus", // nvimtree focus
+      "space t h": "theme_selector::Toggle", // nvchad themes
+      "space n": "editor::ToggleLineNumbers", // toggle line number
+      "space r n": "editor::ToggleRelativeLineNumbers", // toggle relative number
+      "space c h": "zed::OpenKeymap", // cheatsheet -> this file
+      // NvChad's <leader>pt is dropped: it would shadow <leader>p below.
+      // Terminal is on alt-v / alt-i / space h / space v instead.
+      "space h": "workspace::NewTerminal", // new horizontal term
+      "space v": "workspace::NewTerminal", // new vertical term
+
+      // ── Buffers / files ──
+      "space w": "workspace::Save", // mappings.lua: <leader>w -> :w
+      "space q": "pane::CloseActiveItem", // mappings.lua: <leader>q -> :q
+      "space x": "pane::CloseActiveItem", // NvChad: buffer close
+      "space /": "editor::ToggleComments", // toggle comment
+      "space b": "vim::ToggleVisualBlock", // mappings.lua: <leader>b -> <C-v>
+
+      // ── Clipboard (asbjornHaland remaps) ──
+      // settings.json sets vim.use_system_clipboard = "on_yank", so plain
+      // y/p already behave like "+y / "+p and d no longer clobbers the
+      // paste register. These keep the muscle memory working.
+      "space y": ["workspace::SendKeystrokes", "y"], // "+y (operator-pending)
+      "space shift-y": ["workspace::SendKeystrokes", "y"], // "+Y
+      "space p": ["workspace::SendKeystrokes", "p"], // "+p
+      "space shift-p": ["workspace::SendKeystrokes", "shift-p"], // "+P
+
+      // ── Substitute word under cursor (mappings.lua <leader>s) ──
+      // Nearest Zed equivalent: multi-cursor on every occurrence, then type.
+      "space s": "editor::SelectAllMatches",
+
+      // ── Diagnostics / LSP ──
+      "space d": "editor::Hover", // diagnostic float for the line
+      // NvChad's <leader>ds is dropped: it would shadow <leader>d above.
+      // The diagnostics panel is on Zed's native ctrl-shift-m.
+      "space a": "editor::ToggleCodeActions", // vim.lsp.buf.code_action
+      "space g f": "editor::ToggleCodeActions", // actions-preview
+      "space r a": "editor::Rename", // NvRenamer
+      "space shift-d": "editor::GoToTypeDefinition", // <leader>D
+      "g d": "editor::GoToDefinition",
+      "g shift-d": "editor::GoToDeclaration", // gD
+      "g r": "editor::FindAllReferences",
+      "g i": "editor::GoToImplementation"
+    }
+  },
+
+  // ───────────────────────────────────────────────────────────────
+  // Visual mode
+  // ───────────────────────────────────────────────────────────────
+  {
+    "context": "Editor && vim_mode == visual && !menu",
+    "bindings": {
+      "shift-j": "editor::MoveLineDown", // mappings.lua: ":m '>+1"
+      "shift-k": "editor::MoveLineUp", // mappings.lua: ":m '<-2"
+      ">": "editor::Indent", // ">gv" — Zed keeps the selection
+      "<": "editor::Outdent", // "<gv"
+
+      // x-mode <leader>p -> "_dP : paste over selection, keep the register
+      "space p": ["vim::Paste", { "preserve_clipboard": true }],
+
+      "space y": ["workspace::SendKeystrokes", "y"], // "+y
+      "space /": "editor::ToggleComments", // toggle comment
+      "space g f": "editor::ToggleCodeActions" // actions-preview
+    }
+  },
+
+  // ───────────────────────────────────────────────────────────────
+  // Project panel — nvim-tree default keymap
+  //
+  // `not_editing` keeps these single letters from firing while you are
+  // typing a name into the rename / create input. Always keep that guard
+  // on letter keys here.
+  //
+  // Already correct out of the box (Zed's own vim layer): j/k move,
+  // h/l collapse/expand, `a` new file, shift-a new directory,
+  // `-` select parent, g/shift-g top/bottom, escape unfocus, z-t/z-z/z-b
+  // scroll, ctrl-d/ctrl-u page.
+  // ───────────────────────────────────────────────────────────────
+  {
+    "context": "ProjectPanel && not_editing",
+    "bindings": {
+      // ── Opening ──
+      "o": "project_panel::Open", // nvim-tree: o / <CR> open
+      "enter": "project_panel::OpenPermanent", // <CR> open (pinned tab)
+      "tab": "project_panel::Open", // <Tab> preview (Zed: preview tab)
+      "ctrl-t": "project_panel::OpenPermanent", // <C-t> open in new tab
+      "ctrl-v": "project_panel::OpenSplitVertical", // <C-v> vertical split
+      "ctrl-x": "project_panel::OpenSplitHorizontal", // <C-x> horizontal split
+      "s": "project_panel::OpenWithSystem", // s run system
+
+      // ── File operations ──
+      "r": "project_panel::Rename", // r rename
+      "d": "project_panel::Delete", // d delete
+      "shift-d": "project_panel::Trash", // D trash
+      "c": "project_panel::Copy", // c copy
+      "x": "project_panel::Cut", // x cut
+      "p": "project_panel::Paste", // p paste
+      "shift-y": "project_panel::CopyRelativePath", // Y copy relative path
+      "g y": "project_panel::CopyPath", // gy copy absolute path
+      "shift-s": "project_panel::NewSearchInDirectory", // S search in dir
+
+      // ── Tree navigation ──
+      "backspace": "project_panel::CollapseSelectedEntry", // <BS> close directory
+      "shift-p": "project_panel::SelectParent", // P parent directory
+      "shift-e": "project_panel::ExpandAllEntries", // E expand all
+      "shift-w": "project_panel::CollapseAllEntries", // W collapse all
+      "shift-j": "menu::SelectLast", // J last sibling (approx: bottom)
+      "shift-k": "menu::SelectFirst", // K first sibling (approx: top)
+
+      // ── Git / diagnostic hops ──
+      "] c": "project_panel::SelectNextGitEntry", // ]c next git
+      "[ c": "project_panel::SelectPrevGitEntry", // [c prev git
+      "] e": "project_panel::SelectNextDiagnostic", // ]e next diagnostic
+      "[ e": "project_panel::SelectPrevDiagnostic", // [e prev diagnostic
+
+      // ── Filters ──
+      "shift-h": "project_panel::ToggleHideHidden", // H toggle dotfiles
+      "shift-i": "project_panel::ToggleHideGitIgnore", // I toggle git ignored
+
+      // ── Close ──
+      "q": "workspace::ToggleLeftDock" // q close tree
+    }
+  },
+
+  // ───────────────────────────────────────────────────────────────
+  // Git panel — changes list
+  //
+  // Nothing in the nvim config to port here: gitsigns is configured with
+  // signs only and no keymaps, and there is no neogit/fugitive/lazygit.
+  // So this is a vim-consistent layer over Zed's own git actions,
+  // following the same idiom as the project panel block above.
+  //
+  // Already correct out of the box: h/l collapse/expand, i focus commit
+  // editor, space + x toggle staged, u stage-and-next, shift-u unstage,
+  // shift-x stage all, shift-o toggle staged, p restore, tab/shift-tab
+  // move between list and commit editor, ctrl-g up/down push/pull,
+  // ctrl-g ctrl-g fetch, ctrl-enter commit, ctrl-shift-enter amend.
+  //
+  // The real gap is that j/k were never bound here — only the arrows.
+  // ───────────────────────────────────────────────────────────────
+  {
+    "context": "GitPanel && ChangesList && !GitBranchSelector && !GitRepositorySelector",
+    "bindings": {
+      // ── Motion (the missing piece) ──
+      "j": "git_panel::NextEntry",
+      "k": "git_panel::PreviousEntry",
+      "g g": "git_panel::FirstEntry",
+      "shift-g": "git_panel::LastEntry",
+
+      // ── Staging: s/S alongside Zed's u/shift-x, fugitive-style ──
+      "s": "git::StageAndNext",
+      "shift-s": "git::StageAll",
+      "shift-r": "git::RestoreAndNext", // discard entry, move on
+
+      // ── Commit ──
+      "c": "git_panel::FocusEditor", // start writing the message
+      "shift-c": "git::Commit",
+      "shift-a": "git::Amend",
+      "g l": "git::GenerateCommitMessage",
+
+      // ── Inspect ──
+      "d": "git::Diff", // diff the selection
+      "g b": "git::Blame",
+
+      // ── Panel views ──
+      "g 1": "git_panel::ActivateChangesTab",
+      "g 2": "git_panel::ActivateHistoryTab",
+      "g t": "git_panel::ToggleTreeView",
+
+      "q": "git_panel::Close"
+    }
+  },
+
+  // ───────────────────────────────────────────────────────────────
+  // Buffer-level git — the gitsigns keymaps you never configured.
+  // gitsigns' `main` branch ships no default mappings and NvChad's
+  // config sets only sign icons, so these are additions, not ports.
+  // `]c` / `[c` is the standard vim diff-mode hunk motion.
+  // ───────────────────────────────────────────────────────────────
+  {
+    "context": "Editor && vim_mode == normal && !menu",
+    "bindings": {
+      "] c": "editor::GoToHunk", // next hunk
+      "[ c": "editor::GoToPreviousHunk", // previous hunk
+      "space g s": "git::ToggleStaged", // stage/unstage current hunk
+      "space g r": "git::Restore", // reset hunk
+      "space g p": "editor::ToggleSelectedDiffHunks", // preview hunk inline
+      "space g b": "editor::ToggleGitBlameInline", // inline blame
+      "space g d": "git::Diff" // diff current file
+    }
+  }
+]
