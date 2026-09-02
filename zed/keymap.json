@@ -77,12 +77,28 @@
       "space m a": "vim::ToggleMarksView", // find marks
 
       // ── Git (NvChad telescope git) ──
+      //
+      // Editor-context, so these need a buffer focused. With focus in the
+      // git or project panel a bare `space` is already a *complete* Zed
+      // binding there (git::ToggleStaged / project_panel::Open) with no
+      // `space c m` to wait for, so it fires on the spot instead of
+      // starting the chord. That is not a dropped keystroke, it is the
+      // panel's own binding winning.
+      //
+      // ctrl-shift-g is Zed's built-in git_panel::ToggleFocus at Workspace
+      // context — it works from any focus, panels included, and is now a
+      // real toggle thanks to close_panel_on_toggle in settings.json.
+      // Reach for that one when focus is not in a buffer.
       "space c m": "git_panel::ToggleFocus", // git commits
       "space g t": "git_panel::ToggleFocus", // git status
 
       // ── UI toggles ──
       "space e": "project_panel::ToggleFocus", // nvimtree focus
       "space t h": "theme_selector::Toggle", // nvchad themes
+      // Typst: open the tinymist background preview (127.0.0.1:23635) in
+      // the browser. See zed/tasks.json. Closest thing Zed has to nvim's
+      // :TypstPreview.
+      "space t p": ["task::Spawn", { "task_name": "Typst: Open Preview" }],
       "space n": "editor::ToggleLineNumbers", // toggle line number
       "space r n": "editor::ToggleRelativeLineNumbers", // toggle relative number
       "space c h": "zed::OpenKeymap", // cheatsheet -> this file
@@ -119,7 +135,17 @@
         "space g f": "editor::ToggleCodeActions", // actions-preview
         "space r a": "editor::Rename", // NvRenamer
         "space shift-d": "editor::GoToTypeDefinition", // <leader>D
-        "ctrl-c": ["agent::NewExternalAgentThread", { "agent": "claude-acp" }],
+        // Toggle the agent panel, keeping whatever conversation is already
+        // open. This used to be agent::NewExternalAgentThread, which Zed
+        // documents as "creates a new external agent conversation thread" —
+        // i.e. it threw the session away on every press. Starting a fresh
+        // one is now a deliberate act on <leader>c c.
+        //
+        // The panel serialises its active thread and last-used agent, so a
+        // toggle comes back to the same claude-acp conversation, across
+        // restarts too.
+        "ctrl-c": "agent::ToggleFocus",
+        "space c c": ["agent::NewExternalAgentThread", { "agent": "claude-acp" }],
         "g d": "editor::GoToDefinition",
         "g shift-d": "editor::GoToDeclaration", // gD
         "g r": "editor::FindAllReferences",
@@ -144,6 +170,41 @@
       "space y": ["workspace::SendKeystrokes", "y"], // "+y
       "space /": "editor::ToggleComments", // toggle comment
       "space g f": "editor::ToggleCodeActions" // actions-preview
+    }
+  },
+
+  // ───────────────────────────────────────────────────────────────
+  // Agent panel — make ctrl-c a real toggle
+  //
+  // The binding above lives in an Editor context, so it only fires while a
+  // buffer has focus: without this half, ctrl-c would open the panel and
+  // then have no way back out.
+  //
+  // claude-acp is an *external* agent, so its thread view and message
+  // editor sit under `AcpThread`, not `AgentPanel` — see the AcpThread
+  // blocks in Zed's default-windows.json. AgentPanel only covers the panel
+  // chrome itself.
+  //
+  // Zed evaluates a bare identifier against the *leaf* of the focus stack,
+  // not the whole chain, which is why `AgentPanel` alone never fired while
+  // the cursor was in the message box: the leaf there is `Editor`, with
+  // AcpThread above it. Hence all three arms.
+  //
+  // Not guarded on insert mode, deliberately: the message editor lands in
+  // insert the moment the panel takes focus, and vim.json binds ctrl-c to
+  // vim::NormalBefore at that same Editor leaf. An insert guard would
+  // exclude the one state the panel is actually in. This wins because user
+  // bindings are applied after the defaults at equal depth.
+  //
+  // Cost: ctrl-c no longer escapes insert inside the message editor.
+  // Escape still does.
+  //
+  // To check the live context stack: `dev: open key context view`.
+  // ───────────────────────────────────────────────────────────────
+  {
+    "context": "AgentPanel || AcpThread || (AcpThread > Editor)",
+    "bindings": {
+      "ctrl-c": "agent::ToggleFocus"
     }
   },
 
@@ -213,13 +274,16 @@
   // So this is a vim-consistent layer over Zed's own git actions,
   // following the same idiom as the project panel block above.
   //
-  // Already correct out of the box: h/l collapse/expand, i focus commit
-  // editor, space + x toggle staged, u stage-and-next, shift-u unstage,
-  // shift-x stage all, shift-o toggle staged, p restore, tab/shift-tab
-  // move between list and commit editor, ctrl-g up/down push/pull,
-  // ctrl-g ctrl-g fetch, ctrl-enter commit, ctrl-shift-enter amend.
+  // Actual defaults in this context (Zed 1.18, default-windows.json):
+  // arrows navigate, left/right collapse/expand, space toggle staged,
+  // shift-space stage range, alt-y / shift-alt-y stage / unstage file,
+  // ctrl-space / ctrl-shift-space stage / unstage all, tab and shift-tab
+  // focus the commit editor, escape unfocuses the panel, delete and
+  // backspace restore a file, ctrl-1 / ctrl-2 switch tabs, ctrl-enter
+  // commit, ctrl-shift-enter amend, and ctrl-g chords for fetch, push,
+  // pull and rebase.
   //
-  // The real gap is that j/k were never bound here — only the arrows.
+  // The gap is that j/k were never bound here — only the arrows.
   // ───────────────────────────────────────────────────────────────
   {
     "context": "GitPanel && ChangesList && !GitBranchSelector && !GitRepositorySelector",
@@ -230,10 +294,20 @@
       "g g": "git_panel::FirstEntry",
       "shift-g": "git_panel::LastEntry",
 
-      // ── Staging: s/S alongside Zed's u/shift-x, fugitive-style ──
-      "s": "git::StageAndNext",
+      // ── Staging, fugitive-style ──
+      //
+      // s and shift-r used to be git::StageAndNext / git::RestoreAndNext.
+      // Those are Editor actions — they walk hunks inside a diff
+      // multibuffer (default-windows.json binds them under `Editor` and
+      // `GitDiff > Editor`). Dispatched from the panel nothing handles
+      // them, so the key fired an action no one answered and silently did
+      // nothing. The panel works on whole entries, so these are the
+      // entry-level equivalents.
+      "s": "git::StageFile",
+      "u": "git::UnstageFile",
       "shift-s": "git::StageAll",
-      "shift-r": "git::RestoreAndNext", // discard entry, move on
+      "shift-u": "git::UnstageAll",
+      "shift-r": ["git::RestoreFile", { "skip_prompt": false }], // discard entry
 
       // ── Commit ──
       "c": "git_panel::FocusEditor", // start writing the message

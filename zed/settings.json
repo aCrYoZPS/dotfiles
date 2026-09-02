@@ -7,6 +7,9 @@
 // custom settings, run `zed: open default settings` from the
 // command palette (cmd-shift-p / ctrl-shift-p)
 {
+    "edit_predictions": {
+        "provider": "none",
+    },
     "agent_servers": {
         "claude-acp": {
             "default_config_options": {
@@ -16,6 +19,12 @@
         },
     },
     "cli_default_open_behavior": "new_window",
+    // Makes every panel's ToggleFocus binding an actual toggle. Zed defaults
+    // this to false, where a second press only bounces focus back to the
+    // editor and leaves the panel open — which is why ctrl-c (agent panel)
+    // and <leader>e (project panel) felt like "switch", not "toggle".
+    // workspace.rs only calls close_panel() when this is on.
+    "close_panel_on_toggle": true,
     "outline_panel": {
         "dock": "left",
     },
@@ -29,7 +38,17 @@
         "model_parameters": [],
     },
     "git_panel": {
+        "tree_view": false,
         "dock": "left",
+    },
+    "git": {
+        // Inline blame is on by default. Off here: it reflows the line as you
+        // move through a file, and the same information is a keystroke away.
+        // <leader>g b (editor::ToggleGitBlameInline) still turns it on per
+        // buffer, and <leader>g d / the git panel cover the rest.
+        "inline_blame": {
+            "enabled": false,
+        },
     },
     "terminal": {
         "starts_open": false,
@@ -44,9 +63,6 @@
     },
     // Zed's inline AI autocomplete (Zeta). Disabled: the account is not
     // entitled to it, so the client only produced 403 spam while typing.
-    "features": {
-        "edit_prediction_provider": "none",
-    },
     "show_edit_predictions": false,
     "format_on_save": "modifications_if_available",
     "vim": {
@@ -82,6 +98,7 @@
     // Listing them here makes a fresh machine install them on first launch.
     "auto_install_extensions": {
         "html": true,
+        "typst": true,
         "catppuccin": true,
         "catppuccin-icons": true,
     },
@@ -99,6 +116,50 @@
     "theme": {
         "mode": "dark",
         "light": "One Light",
-        "dark": "Ayu Dark",
+        "dark": "Duskfox - opaque",
+    },
+
+    "lsp": {
+        "tinymist": {
+            "initialization_options": {
+                // Enable background preview: one long-lived preview server on
+                // 127.0.0.1:23635 that follows the focused .typ buffer.
+                // Opened in the browser by the "Typst: Open Preview" task
+                // (zed/tasks.json, bound to <leader>t p).
+                "preview": {
+                    "background": {
+                        "enabled": true,
+                        // Overriding args replaces the default array wholesale,
+                        // so --data-plane-host has to be repeated here.
+                        //
+                        // --invert-colors=auto (the default) flips the page to
+                        // dark whenever the browser reports a dark colour
+                        // scheme. "never" pins the preview to the paper it will
+                        // actually print as, regardless of the system theme.
+                        "args": [
+                            "--data-plane-host=127.0.0.1:23635",
+                            "--invert-colors=never",
+                        ],
+                    },
+                },
+            },
+
+            "settings": {
+                // Compile on save
+                // This will compile a PDF for the `main.typ` file in the project root.
+                "exportPdf": "onSave",
+                "outputPath": "$root/$name",
+
+                // Enable formatter
+                "formatterMode": "typstyle",
+            },
+        },
+    },
+
+    "languages": {
+        "Typst": {
+            // Disable soft wrap
+            "soft_wrap": "none",
+        },
     },
 }

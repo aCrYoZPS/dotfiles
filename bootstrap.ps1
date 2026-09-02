@@ -36,6 +36,7 @@ $links = @(
     @{ Link = "$env:LOCALAPPDATA\nvim";          Target = "$repo\nvim";               Dir = $true  }
     @{ Link = "$env:APPDATA\Zed\settings.json";  Target = "$repo\zed\settings.json";  Dir = $false }
     @{ Link = "$env:APPDATA\Zed\keymap.json";    Target = "$repo\zed\keymap.json";    Dir = $false }
+    @{ Link = "$env:APPDATA\Zed\tasks.json";     Target = "$repo\zed\tasks.json";     Dir = $false }
     @{ Link = "$env:APPDATA\Zed\AGENTS.md";      Target = "$repo\zed\AGENTS.md";      Dir = $false }
 )
 

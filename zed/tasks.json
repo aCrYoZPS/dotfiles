@@ -1,0 +1,38 @@
+// Zed user tasks — https://zed.dev/docs/tasks
+//
+// Run with `task: spawn` from the command palette, or the keymap.json
+// bindings under <leader>t.
+[
+  // ─────────────────────────────────────────────────────────────
+  // Typst preview
+  //
+  // Zed has no LSP-command bridge, so there is no direct equivalent of
+  // nvim's `:TypstPreview` (typst-preview.nvim calls the tinymist command
+  // over LSP and shells out to a browser itself).
+  //
+  // The tinymist-side answer is "background preview": settings.json sets
+  // lsp.tinymist.initialization_options.preview.background.enabled, which
+  // makes the server run one long-lived preview on 127.0.0.1:23635 for as
+  // long as the LSP is alive. It follows whichever .typ buffer is focused,
+  // so a single browser tab covers the whole project — you open it once,
+  // not once per file. All this task does is point a browser at it.
+  //
+  // Zed tasks have no platform conditional (no `os` field, and `command`
+  // is not shell-dispatched), so portability has to live inside the
+  // command. stdlib `webbrowser` does the OS dispatch for us — it wraps
+  // the same explorer / open / xdg-open the platforms want.
+  //
+  // The interpreter is `python`, not `python3`: on Windows `python3`
+  // resolves to the Microsoft Store stub and errors out. That relies on
+  // `python` being aliased on Linux, where distros ship `python3` only.
+  //
+  // The typst extension ships this same task hardcoded to `xdg-open`,
+  // which is why it silently does nothing on Windows and macOS.
+  {
+    "label": "Typst: Open Preview",
+    "command": "python",
+    "args": ["-m", "webbrowser", "-t", "http://127.0.0.1:23635/"],
+    "reveal": "never",
+    "hide": "on_success"
+  }
+]
