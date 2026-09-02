@@ -111,18 +111,19 @@
       // Nearest Zed equivalent: multi-cursor on every occurrence, then type.
       "space s": "editor::SelectAllMatches",
 
-      // ── Diagnostics / LSP ──
-      "space d": "editor::Hover", // diagnostic float for the line
-      // NvChad's <leader>ds is dropped: it would shadow <leader>d above.
-      // The diagnostics panel is on Zed's native ctrl-shift-m.
-      "space a": "editor::ToggleCodeActions", // vim.lsp.buf.code_action
-      "space g f": "editor::ToggleCodeActions", // actions-preview
-      "space r a": "editor::Rename", // NvRenamer
-      "space shift-d": "editor::GoToTypeDefinition", // <leader>D
-      "g d": "editor::GoToDefinition",
-      "g shift-d": "editor::GoToDeclaration", // gD
-      "g r": "editor::FindAllReferences",
-      "g i": "editor::GoToImplementation"
+        // ── Diagnostics / LSP ──
+        "space d": "editor::Hover", // diagnostic float for the line
+        // NvChad's <leader>ds is dropped: it would shadow <leader>d above.
+        // The diagnostics panel is on Zed's native ctrl-shift-m.
+        "space a": "editor::ToggleCodeActions", // vim.lsp.buf.code_action
+        "space g f": "editor::ToggleCodeActions", // actions-preview
+        "space r a": "editor::Rename", // NvRenamer
+        "space shift-d": "editor::GoToTypeDefinition", // <leader>D
+        "ctrl-c": ["agent::NewExternalAgentThread", { "agent": "claude-acp" }],
+        "g d": "editor::GoToDefinition",
+        "g shift-d": "editor::GoToDeclaration", // gD
+        "g r": "editor::FindAllReferences",
+        "g i": "editor::GoToImplementation",
     }
   },
 
