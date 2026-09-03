@@ -107,6 +107,20 @@
       "space h": "workspace::NewTerminal", // new horizontal term
       "space v": "workspace::NewTerminal", // new vertical term
 
+      // ── Tasks / run the project (zed/tasks.json) ──
+      //
+      // Zed has no single "run the project" action, so this is the two-key
+      // version of one: <leader>r s opens the task picker — the Run: entries
+      // in tasks.json plus whatever the language extensions contribute for
+      // the focused buffer — and <leader>r r repeats the last pick with no
+      // prompt. Task history is per workspace session, so the first run
+      // after opening a project always goes through the picker.
+      //
+      // `space r` is free as a prefix: the only other bindings under it are
+      // `space r n` and `space r a` below.
+      "space r s": "task::Spawn",
+      "space r r": "task::Rerun",
+
       // ── Buffers / files ──
       "space w": "workspace::Save", // mappings.lua: <leader>w -> :w
       "space q": "workspace::CloseWindow", // mappings.lua: <leader>q -> :q
@@ -205,6 +219,71 @@
     "context": "AgentPanel || AcpThread || (AcpThread > Editor)",
     "bindings": {
       "ctrl-c": "agent::ToggleFocus"
+    }
+  },
+
+  // ───────────────────────────────────────────────────────────────
+  // Agent panel — scroll the transcript with vim keys
+  //
+  // Zed has a full agent::ScrollOutput* family, but inside the message
+  // editor it only binds the ctrl-alt-* variants; bare up/down/pageup only
+  // scroll when the *thread* holds focus, not the editor. Since the editor
+  // is where focus actually lives, escaping to normal mode left no way to
+  // move the transcript.
+  //
+  // The actions are handled by AcpThread, above the editor in the focus
+  // stack, so dispatching them from the editor leaf bubbles up fine.
+  //
+  // ctrl-e / ctrl-y / ctrl-d / ctrl-u are unconditional: in vim they scroll
+  // the focused editor, which is meaningless in an auto-height message box,
+  // so nothing is lost by repointing them at the transcript.
+  // ───────────────────────────────────────────────────────────────
+  {
+    "context": "AcpThread > Editor && vim_mode == normal",
+    "bindings": {
+      "ctrl-e": "agent::ScrollOutputLineDown",
+      "ctrl-y": "agent::ScrollOutputLineUp",
+      "ctrl-d": "agent::ScrollOutputPageDown",
+      "ctrl-u": "agent::ScrollOutputPageUp",
+      "] ]": "agent::ScrollOutputToNextMessage",
+      "[ [": "agent::ScrollOutputToPreviousMessage"
+    }
+  },
+
+  // j/k/gg/G are guarded on start_of_input / end_of_input — Zed's own
+  // condition for the same trick with pageup/pagedown. So they keep moving
+  // the cursor through a multi-line draft and only scroll the transcript
+  // once the cursor is already at the edge. An empty message box satisfies
+  // both predicates, which is the common case: j and k just scroll.
+  {
+    "context": "AcpThread > Editor && vim_mode == normal && start_of_input",
+    "bindings": {
+      "k": "agent::ScrollOutputLineUp",
+      "g g": "agent::ScrollOutputToTop"
+    }
+  },
+  {
+    "context": "AcpThread > Editor && vim_mode == normal && end_of_input",
+    "bindings": {
+      "j": "agent::ScrollOutputLineDown",
+      "shift-g": "agent::ScrollOutputToBottom"
+    }
+  },
+
+  // Same keys for when the thread itself holds focus rather than the message
+  // editor. Zed binds arrows and pageup/pagedown here already but no vim
+  // keys; there is no vim layer at this leaf, so no mode guard applies.
+  {
+    "context": "AcpThread",
+    "bindings": {
+      "j": "agent::ScrollOutputLineDown",
+      "k": "agent::ScrollOutputLineUp",
+      "ctrl-d": "agent::ScrollOutputPageDown",
+      "ctrl-u": "agent::ScrollOutputPageUp",
+      "g g": "agent::ScrollOutputToTop",
+      "shift-g": "agent::ScrollOutputToBottom",
+      "] ]": "agent::ScrollOutputToNextMessage",
+      "[ [": "agent::ScrollOutputToPreviousMessage"
     }
   },
 

@@ -34,5 +34,66 @@
     "args": ["-m", "webbrowser", "-t", "http://127.0.0.1:23635/"],
     "reveal": "never",
     "hide": "on_success"
+  },
+
+  // ───────────────────────────────────────────────────────────
+  // Run the current project
+  //
+  // Zed has no single "run the project" action. `task::Spawn` opens a picker
+  // over these, and `task::Rerun` repeats whichever one you picked last with
+  // no prompt — bound to <leader>r s and <leader>r r in keymap.json. So the
+  // first run of a session costs one pick and every run after it is a chord.
+  //
+  // cwd is the worktree root, not the focused file's directory, so these run
+  // the project regardless of which buffer happens to be open. $ZED_FILE and
+  // friends are quoted because Windows paths contain spaces.
+  //
+  // Language extensions contribute their own runnables to the same picker
+  // (cargo test at the cursor, go test for the package), so these only need
+  // to cover the whole-project entry point.
+  {
+    "label": "Run: cargo run",
+    "command": "cargo",
+    "args": ["run"],
+    "cwd": "$ZED_WORKTREE_ROOT",
+    "reveal": "always",
+    "use_new_terminal": false,
+    "allow_concurrent_runs": false
+  },
+  {
+    "label": "Run: go run .",
+    "command": "go",
+    "args": ["run", "."],
+    "cwd": "$ZED_WORKTREE_ROOT",
+    "reveal": "always",
+    "use_new_terminal": false,
+    "allow_concurrent_runs": false
+  },
+  {
+    "label": "Run: dotnet run",
+    "command": "dotnet",
+    "args": ["run"],
+    "cwd": "$ZED_WORKTREE_ROOT",
+    "reveal": "always",
+    "use_new_terminal": false,
+    "allow_concurrent_runs": false
+  },
+  {
+    "label": "Run: npm start",
+    "command": "npm",
+    "args": ["start"],
+    "cwd": "$ZED_WORKTREE_ROOT",
+    "reveal": "always",
+    "use_new_terminal": false,
+    "allow_concurrent_runs": false
+  },
+  {
+    "label": "Run: python (current file)",
+    "command": "python",
+    "args": ["\"$ZED_FILE\""],
+    "cwd": "$ZED_WORKTREE_ROOT",
+    "reveal": "always",
+    "use_new_terminal": false,
+    "allow_concurrent_runs": false
   }
 ]
