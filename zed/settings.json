@@ -64,7 +64,19 @@
     // Zed's inline AI autocomplete (Zeta). Disabled: the account is not
     // entitled to it, so the client only produced 403 spam while typing.
     "show_edit_predictions": false,
-    "format_on_save": "modifications_if_available",
+    // Formatting mirrors nvim's conform.nvim setup (nvim/lua/configs/conform.lua).
+    // conform formats the WHOLE buffer on save and falls back to the language
+    // server when no formatter is registered for the filetype, so:
+    //   "on" (not "modifications_if_available") == conform's whole-buffer format
+    //   "language_server" as the global formatter == conform's lsp_format = "fallback"
+    // The per-language overrides at the bottom name the same tool nvim used.
+    "format_on_save": "on",
+    "formatter": "language_server",
+    // nvim never strips trailing whitespace and never appends a missing final
+    // newline (vim.opt.fixeol = false) - only the formatter itself touches those.
+    // Zed does both on save by default, rewriting lines no formatter asked for.
+    "remove_trailing_whitespace_on_save": false,
+    "ensure_final_newline_on_save": false,
     "vim": {
         "use_smartcase_find": true,
         "toggle_relative_line_numbers": false,
@@ -116,10 +128,15 @@
     "theme": {
         "mode": "dark",
         "light": "One Light",
-        "dark": "Duskfox - opaque",
+        "dark": "Tokyo Night",
     },
 
     "lsp": {
+        "vtsls": {
+            "settings": {
+                "typescript": { "tsdk": "node_modules/typescript/lib" },
+            },
+        },
         "tinymist": {
             "initialization_options": {
                 // Enable background preview: one long-lived preview server on
@@ -156,7 +173,95 @@
         },
     },
 
+    // conform's formatters_by_ft, translated. Anything absent inherits the global
+    // "language_server" formatter above, which is conform's LSP fallback.
     "languages": {
+        // Not in formatters_by_ft, so nvim formatted these with ts_ls. Left on
+        // Zed's default "auto" they go to the bundled Prettier instead, which
+        // reflows to 2-space / 80-column and ignores tab_size.
+        "TypeScript": {
+            "formatter": "language_server",
+        },
+        "TSX": {
+            "formatter": "language_server",
+        },
+        "JavaScript": {
+            "formatter": "language_server",
+        },
+        "JSON": {
+            "formatter": "prettier",
+        },
+        "JSONC": {
+            "formatter": "prettier",
+        },
+        "HTML": {
+            "formatter": "prettier",
+        },
+        // Mason's bin holds .cmd shims and is not on PATH, so stylua and
+        // csharpier point straight at the executables. clang-format (LLVM) and
+        // gofumpt (~/go/bin) are already on PATH.
+        "Lua": {
+            "formatter": {
+                "external": {
+                    "command": "C:/Users/aCrYoZ/AppData/Local/nvim-data/mason/packages/stylua/stylua.exe",
+                    "arguments": ["--stdin-filepath", "{buffer_path}", "-"],
+                },
+            },
+        },
+        "C": {
+            "formatter": {
+                "external": {
+                    "command": "clang-format",
+                    "arguments": ["--assume-filename={buffer_path}"],
+                },
+            },
+        },
+        "C++": {
+            "formatter": {
+                "external": {
+                    "command": "clang-format",
+                    "arguments": ["--assume-filename={buffer_path}"],
+                },
+            },
+        },
+        // Requires the "csharp" extension for the language to exist at all.
+        // CSharpier 1.x needs an absolute --stdin-path; {buffer_path} is one.
+        "C#": {
+            "formatter": {
+                "external": {
+                    "command": "C:/Users/aCrYoZ/AppData/Local/nvim-data/mason/packages/csharpier/csharpier.exe",
+                    "arguments": [
+                        "format",
+                        "--write-stdout",
+                        "--stdin-path",
+                        "{buffer_path}",
+                    ],
+                },
+            },
+        },
+        // null-ls ran gofumpt + goimports-reviser (nvim/lua/configs/null-ls.lua).
+        // goimports-reviser cannot read stdin, so gopls' organizeImports code
+        // action stands in for it; gofumpt reads stdin with no arguments.
+        "Go": {
+            "formatter": [
+                { "code_action": "source.organizeImports" },
+                {
+                    "external": {
+                        "command": "gofumpt",
+                        "arguments": [],
+                    },
+                },
+            ],
+        },
+        // conform lists flake8 for python and mdformat for markdown. flake8 is a
+        // linter, not a formatter, and mdformat is not installed on this machine
+        // - both just error on save in nvim, so nothing formats here either.
+        "Python": {
+            "format_on_save": "off",
+        },
+        "Markdown": {
+            "format_on_save": "off",
+        },
         "Typst": {
             // Disable soft wrap
             "soft_wrap": "none",
