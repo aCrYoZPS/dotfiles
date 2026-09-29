@@ -4,37 +4,31 @@
 // bindings under <leader>t.
 [
   // ─────────────────────────────────────────────────────────────
-  // Typst preview
+  // Typst preview lives in the PROJECT, not here.
   //
   // Zed has no LSP-command bridge, so there is no direct equivalent of
   // nvim's `:TypstPreview` (typst-preview.nvim calls the tinymist command
   // over LSP and shells out to a browser itself).
   //
-  // The tinymist-side answer is "background preview": settings.json sets
-  // lsp.tinymist.initialization_options.preview.background.enabled, which
-  // makes the server run one long-lived preview on 127.0.0.1:23635 for as
-  // long as the LSP is alive. It follows whichever .typ buffer is focused,
-  // so a single browser tab covers the whole project — you open it once,
-  // not once per file. All this task does is point a browser at it.
+  // The closest thing is tinymist's "background preview": the preview
+  // server runs inside the language server process, so it renders from the
+  // in-memory buffer and follows your typing without a save. A standalone
+  // `tinymist preview` process cannot do that — no access to the buffer,
+  // it only sees the file on disk — so it is not used here.
   //
-  // Zed tasks have no platform conditional (no `os` field, and `command`
-  // is not shell-dispatched), so portability has to live inside the
-  // command. stdlib `webbrowser` does the OS dispatch for us — it wraps
-  // the same explorer / open / xdg-open the platforms want.
+  // That server binds one fixed port, which is why both the port and the
+  // task that opens a browser on it live per project:
+  //     <project>/.zed/settings.json   enables it, pins the port
+  //     <project>/.zed/tasks.json      "Typst: Open Preview"  (<leader>t p)
+  // Ports so far: 23635 mzi, 23636 trpo — keep them distinct, or the second
+  // project's tinymist dies on AddrInUse and is left with no LSP at all.
   //
-  // The interpreter is `python`, not `python3`: on Windows `python3`
-  // resolves to the Microsoft Store stub and errors out. That relies on
-  // `python` being aliased on Linux, where distros ship `python3` only.
+  // Nothing to clean up: the preview exits with the language server, which
+  // exits when the project closes.
   //
-  // The typst extension ships this same task hardcoded to `xdg-open`,
-  // which is why it silently does nothing on Windows and macOS.
-  {
-    "label": "Typst: Open Preview",
-    "command": "python",
-    "args": ["-m", "webbrowser", "-t", "http://127.0.0.1:23635/"],
-    "reveal": "never",
-    "hide": "on_success"
-  },
+  // NB: do not add a task that kills tinymist by image name. Once tinymist
+  // is on PATH (winget / cargo), Zed runs the language servers from that
+  // same binary, so /IM tinymist.exe would take them down too.
 
   // ───────────────────────────────────────────────────────────
   // Run the current project

@@ -95,9 +95,16 @@
       // ── UI toggles ──
       "space e": "project_panel::ToggleFocus", // nvimtree focus
       "space t h": "theme_selector::Toggle", // nvchad themes
-      // Typst: open the tinymist background preview (127.0.0.1:23635) in
-      // the browser. See zed/tasks.json. Closest thing Zed has to nvim's
-      // :TypstPreview.
+      // Typst: open this project's live preview in the browser. The server
+      // runs inside tinymist itself, so the page follows the buffer as you
+      // type — no save needed. Defined per project in .zed/tasks.json, on a
+      // port that .zed/settings.json pins per project; in a project without
+      // that file there is nothing to open.
+      //
+      // For a one-off .typ outside such a project there is still the global
+      // "Typst: Preview this file" task (zed/tasks.json), which spawns a
+      // standalone process — it renders from disk, so that one only updates
+      // when you save.
       "space t p": ["task::Spawn", { "task_name": "Typst: Open Preview" }],
       "space n": "editor::ToggleLineNumbers", // toggle line number
       "space r n": "editor::ToggleRelativeLineNumbers", // toggle relative number
@@ -199,10 +206,11 @@
   // blocks in Zed's default-windows.json. AgentPanel only covers the panel
   // chrome itself.
   //
-  // Zed evaluates a bare identifier against the *leaf* of the focus stack,
-  // not the whole chain, which is why `AgentPanel` alone never fired while
-  // the cursor was in the message box: the leaf there is `Editor`, with
-  // AcpThread above it. Hence all three arms.
+  // An ancestor binding does reach a focused descendant, but the deepest
+  // matching node wins: `AgentPanel` alone lost to vim.json's own ctrl-c at
+  // the `Editor` leaf whenever the cursor sat in the message box. The
+  // `(AcpThread > Editor)` arm is what actually outranks it; the other two
+  // cover the panel chrome and the thread view.
   //
   // Not guarded on insert mode, deliberately: the message editor lands in
   // insert the moment the panel takes focus, and vim.json binds ctrl-c to
@@ -270,20 +278,24 @@
     }
   },
 
-  // Same keys for when the thread itself holds focus rather than the message
-  // editor. Zed binds arrows and pageup/pagedown here already but no vim
-  // keys; there is no vim layer at this leaf, so no mode guard applies.
+  // Same for when the thread itself holds focus rather than the message editor.
+  //
+  // DO NOT put bare letters or punctuation in this block. A binding on an
+  // ancestor node still fires while a descendant holds focus — gpui walks the
+  // focus chain outward and re-evaluates each level against the stack
+  // truncated to that node, so `AcpThread` matches even when the leaf is the
+  // message editor. Deeper bindings win ties, but insert-mode typing is *not*
+  // a binding: plain `j` reaches the editor as text input only if nothing on
+  // the chain claims it. So `j`/`k`/`g g`/`shift-g`/`] ]`/`[ [` here silently
+  // ate those characters out of every message being typed.
+  //
+  // The mode-guarded blocks above already cover the message editor, which is
+  // where focus lives in practice; only modifier keys are safe to add here.
   {
     "context": "AcpThread",
     "bindings": {
-      "j": "agent::ScrollOutputLineDown",
-      "k": "agent::ScrollOutputLineUp",
       "ctrl-d": "agent::ScrollOutputPageDown",
-      "ctrl-u": "agent::ScrollOutputPageUp",
-      "g g": "agent::ScrollOutputToTop",
-      "shift-g": "agent::ScrollOutputToBottom",
-      "] ]": "agent::ScrollOutputToNextMessage",
-      "[ [": "agent::ScrollOutputToPreviousMessage"
+      "ctrl-u": "agent::ScrollOutputPageUp"
     }
   },
 

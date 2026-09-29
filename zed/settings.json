@@ -13,6 +13,7 @@
     "agent_servers": {
         "claude-acp": {
             "default_config_options": {
+                "mode": "auto",
                 "fast": false,
             },
             "type": "registry",
@@ -54,8 +55,8 @@
         "starts_open": false,
     },
     "project_panel": {
+        "folder_indicator": "icon",
         "git_status_indicator": true,
-        "folder_icons": true,
         "file_icons": true,
         "entry_spacing": "comfortable",
         "default_width": 300.0,
@@ -110,6 +111,7 @@
     // Listing them here makes a fresh machine install them on first launch.
     "auto_install_extensions": {
         "html": true,
+        "angular": true,
         "typst": true,
         "catppuccin": true,
         "catppuccin-icons": true,
@@ -131,6 +133,19 @@
         "dark": "Tokyo Night",
     },
 
+    // Neovim detects an Angular template as filetype "htmlangular", NOT "html"
+    // (content-based - it does not need the .component.html suffix; v0.12 gets
+    // src/app/**/*.html here). That distinction is load-bearing: conform's
+    // formatters_by_ft maps "html", so htmlangular buffers match nothing and
+    // fall through to lsp_format = "fallback".
+    //
+    // Zed has no content detection and the Angular extension only claims
+    // "component.html"/"ng.html", so a project that drops the .component infix
+    // lands on plain HTML -> Prettier. This restores the split.
+    "file_types": {
+        "Angular": ["**/src/app/**/*.html"],
+    },
+
     "lsp": {
         "vtsls": {
             "settings": {
@@ -138,29 +153,6 @@
             },
         },
         "tinymist": {
-            "initialization_options": {
-                // Enable background preview: one long-lived preview server on
-                // 127.0.0.1:23635 that follows the focused .typ buffer.
-                // Opened in the browser by the "Typst: Open Preview" task
-                // (zed/tasks.json, bound to <leader>t p).
-                "preview": {
-                    "background": {
-                        "enabled": true,
-                        // Overriding args replaces the default array wholesale,
-                        // so --data-plane-host has to be repeated here.
-                        //
-                        // --invert-colors=auto (the default) flips the page to
-                        // dark whenever the browser reports a dark colour
-                        // scheme. "never" pins the preview to the paper it will
-                        // actually print as, regardless of the system theme.
-                        "args": [
-                            "--data-plane-host=127.0.0.1:23635",
-                            "--invert-colors=never",
-                        ],
-                    },
-                },
-            },
-
             "settings": {
                 // Compile on save
                 // This will compile a PDF for the `main.typ` file in the project root.
@@ -176,17 +168,29 @@
     // conform's formatters_by_ft, translated. Anything absent inherits the global
     // "language_server" formatter above, which is conform's LSP fallback.
     "languages": {
-        // Not in formatters_by_ft, so nvim formatted these with ts_ls. Left on
-        // Zed's default "auto" they go to the bundled Prettier instead, which
-        // reflows to 2-space / 80-column and ignores tab_size.
+        // Not in formatters_by_ft, so nvim formatted these with ts_ls (tsserver),
+        // which only re-indents - it never rewrites quotes, never reflows to a
+        // print width, never touches line endings.
+        //
+        // "formatter" alone does not keep Zed off Prettier here: Prettier is
+        // "allowed" for these languages by default and still wins on save, so it
+        // has to be switched off explicitly. Left on, Zed's bundled Prettier 3.x
+        // picks up the printWidth/singleQuote config in a project's package.json
+        // and rewrites double quotes to single, collapses wrapped calls up to the
+        // print width, and - because Prettier's endOfLine defaults to "lf" -
+        // rewrites every line of a CRLF file. Under Perforce that last one turns
+        // a one-line edit into a whole-file changelist.
         "TypeScript": {
             "formatter": "language_server",
+            "prettier": { "allowed": false },
         },
         "TSX": {
             "formatter": "language_server",
+            "prettier": { "allowed": false },
         },
         "JavaScript": {
             "formatter": "language_server",
+            "prettier": { "allowed": false },
         },
         "JSON": {
             "formatter": "prettier",
@@ -194,8 +198,25 @@
         "JSONC": {
             "formatter": "prettier",
         },
+        // src/index.html and friends are plain "html" in nvim too, so conform's
+        // html = { "prettier" } really did apply to them.
         "HTML": {
             "formatter": "prettier",
+        },
+        // Angular templates. nvim formatted these with the html language server
+        // (lspconfig attaches vscode-html-language-server to both "html" and
+        // "htmlangular"), never with Prettier - so neither does Zed.
+        //
+        // This is not cosmetic. Prettier's "angular" and "html" parsers disagree
+        // on 25 of this project's 32 templates: the angular parser understands
+        // @if/@for control-flow blocks and indents their children one level in,
+        // the html parser treats "@if (...) {" as text and flattens them. Zed
+        // sends parser "html" for anything it calls HTML, so leaving Prettier on
+        // here re-indents most of the file on every save.
+        "Angular": {
+            "formatter": "language_server",
+            "prettier": { "allowed": false },
+            "language_servers": ["vscode-html-language-server", "..."],
         },
         // Mason's bin holds .cmd shims and is not on PATH, so stylua and
         // csharpier point straight at the executables. clang-format (LLVM) and
